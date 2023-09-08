@@ -11,82 +11,113 @@ pkg load database
 conn = pq_connect(setdbopts('dbname','0980 Proyectos','host','localhost',
 'port','5432','user','postgres', 'password','202001466'));
 
+
 consulta=1;
+reconsulta=1;
 while consulta
-
-fprintf('Bienvenido, que operación quiere realizar: \n 1.Ingresar nuevos gastos.
-\n 2.Ajustar los presupuestos.
-\n 3.Revisar un gasto.
-\n 4.Resumen de los gastos acumulados.
-\n 5.Eliminar un gasto de la base de datos.
-\n 6.Eliminar Toda la Base de Datos. \n \n');
-
+try
+disp('Bienvenido, que operación quiere realizar:')
+disp('  1.Ingresar nuevos gastos.')
+disp('  2.Ajustar los presupuestos.')
+disp('  3.Revisar un gasto.')
+disp('  4.Resumen de los gastos acumulados')
+disp('  5.Eliminar un gasto de la base de datos.')
+disp('  6.Eliminar todos los Gastos de la base de datos.')
+fprintf('  7.Salir. \n \n')
 
 opciones=input("Seleccione el numero de su operación: ");
 fprintf(' \n')
 
+
 if(opciones==1)%1.Ingresar nuevos gastos.
-  gasto=input("Ingrese el nombre del Gasto: ", 's');
-  fprintf(' \n');
-  precio=input("Ingrese el total del Gasto: ");
+  gasto=  input("Ingrese el nombre del Gasto: ", 's');
+  precio= input("Ingrese el total del Gasto: ");
   fprintf(' \n');
 
-  fprintf(" Se gasto en: %s un total de: %d \n \n ",...
-    gasto, precio)
+  fprintf("Se gasto en %s un total de %d \n \n ", gasto, precio)
 
-  query = sprintf("insert into E1_Programa2 (Gasto, Precio) values ('%s', '%d')", ...
+  query=sprintf("insert into E1_Programa2 (Gasto, Precio) values ('%s', '%d')",...
     gasto,precio);
   pq_exec_params(conn, query);
-  fprintf(' \n')
 
 
 elseif (opciones==2)%2.Ajustar los presupuestos.
-  editar=input("Ingrese Nombre del Gasto a editar: ", 's');
+  editar= input("Ingrese Nombre del Gasto a editar: ", 's');
+  gasto=  input("Ingrese Nombre del Nuevo Gasto: ", 's');
+  precio= input("Ingrese Nombre del Nuevo Precio: ");
   fprintf(' \n');
 
-  gasto=input("Ingrese Nombre del Nuevo Gasto: ", 's');
-  fprintf(' \n');
+  fprintf("Se gasto en %s un total de Q%d \n \n ", gasto, precio)
 
-  precio=input("Ingrese Nombre del Nuevo Precio: ");
-  fprintf(' \n');
-
-  fprintf(" Se gasto en: %s un total de: %d \n \n ",...
-    gasto, precio)
-
-  query = sprintf("UPDATE E1_Programa2 SET Gasto='%s', Precio='%d' WHERE Gasto = ('%s');", ...
+  query = sprintf("update E1_Programa2 set Gasto='%s', Precio='%d' where Gasto = ('%s');", ...
     gasto,precio, editar);
   pq_exec_params(conn, query);
-  fprintf(' \n')
 
 
 elseif (opciones==3)%3.Revisar un gasto.
   revisar=input("Nombre del Gasto a Revisar: ", 's');
-  query = sprintf("select * from E1_Programa2 WHERE Gasto =('%s')", ...
-    revisar)
-  Historial_Estudiante=pq_exec_params(conn, query)
+  fprintf(' \n');
+  query = sprintf("select * from E1_Programa2 where Gasto =('%s')", ...
+    revisar);
+  Historial_Gastos=pq_exec_params(conn, query);
+  dato1= Historial_Gastos.data{1};
+  dato2= Historial_Gastos.data{2};
+
+  disp(['Nombre del Gasto: ', dato1])
+  fprintf('Total del Gasto: Q%d. \n', dato2)
 
 
 elseif (opciones==4)%4.Resumen de los gastos acumulados.
   Historial_Postgresql=pq_exec_params(conn, 'select * from E1_Programa2;')
 
+  query = 'select sum(Precio) from E1_Programa2';
+  resultado = pq_exec_params(conn, query);
+  valor_data = resultado.data{1};
+  fprintf('El total de los gastos es: %d \n', valor_data)
+
 
 elseif (opciones==5)%5.Eliminar un gasto de la base de datos.
-  estudiante=input("Nombre del Gasto a Eliminar: ", 's');
-  query = sprintf("DELETE FROM E1_Programa2 WHERE Gasto =('%s')", ...
-    estudiante);
-  pq_exec_params(conn, query);
+  gasto=input("Nombre del Gasto a Eliminar: ", 's');
+  seguro=yes_or_no("¿Seguro que quiere eliminar el gasto?");
+  if(seguro==1)
+    query = sprintf("delete from E1_Programa2 where Gasto =('%s')", gasto);
+    pq_exec_params(conn, query);
+    fprintf('El gasto fue Eliminado. \n');
+  endif
 
 
 elseif (opciones==6)%6.Eliminar Toda la Base de Datos.
-  Borrar_Tabla=pq_exec_params(conn, "DELETE FROM E1_Programa2;");
+  seguro=yes_or_no("¿Seguro que quiere eliminar a todos los gastos?");
+  if(seguro==1)
+    Borrar_Tabla=pq_exec_params(conn, "delete from E1_Programa2;");
+    fprintf('Todos los gastos fueron eliminados. \n');
+  endif
+
+
+elseif (opciones==7)% 6.Salir.
+  fprintf("El programa a finalizado")
+  consulta=0;
+  reconsulta=0;
+
 
 else
-  fprintf("No selecciono ninguna Opcion valida.")
+  fprintf("No selecciono ninguna Opcion valida. \n\n")
+
 endif
 
-fprintf(' \n \n')
 
-consulta=yes_or_no("¿Quieres realizar otra operacion: ");
+fprintf(' \n')
+
+
+if(reconsulta==1)% Reconsulta
+  consulta=yes_or_no("¿Quieres realizar otra operacion: ");
+endif
+
+
+catch
+ fprintf(" \n")
+ fprintf("    ¡Error! El dato que ingreso no es aceptado. Vuelva a intentarlo.\n \n");
+end_try_catch
 
 
 endwhile
