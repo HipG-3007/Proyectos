@@ -15,26 +15,25 @@ consulta=1;
 reconsulta=1;
 while consulta
 try
-disp('Bienvenido, que operación quiere realizar:')
-disp('  1.Ingresar nuevos Pedido.')
-disp('  2.Actualizar la información de un Pedido.')
-disp('  3.Revisar un Pedido.')
-disp('  4.Resumen de los Pedidos acumulados')
-disp('  5.Eliminar un Pedido de la base de datos.')
-disp('  6.Eliminar todos los Pedidos de la base de datos.')
-fprintf('  7.Salir. \n \n')
+fprintf("\n Bienvenido, que operación quiere realizar: \n \n")
+disp("  1.Ingresar nuevos Pedido.")
+disp("  2.Actualizar la información de un Pedido.")
+disp("  3.Revisar un Pedido.")
+disp("  4.Resumen de los Pedidos acumulados")
+disp("  5.Eliminar un Pedido de la base de datos.")
+disp("  6.Eliminar todos los Pedidos de la base de datos.")
+fprintf("  7.Salir. \n \n")
 
 opciones=input("Seleccione el numero de su operación: ");
 fprintf(' \n')
 
 
 if(opciones==1)%1.Ingresar nuevos Pedido.
-  cliente=  input("Ingrese el Nombre del Cliente: ", 's');
 
   i=1;
   while i
-    inv=Inventario("Productos", "1) Arroz--Q4", "2) Frijol--Q3", "3) Huevo(s)--Q1",...
-      "4) Tortilla(s)--Q0.25");
+    inv=menu("Seleccione su Productos", "1) Arroz--------Q4", "2) Frijol--------Q3",...
+      "3) Huevo(s)----Q1", "4) Tortilla(s)----Q0.25");
     if inv==1
       producto="Arroz";
       precio=4;
@@ -52,55 +51,121 @@ if(opciones==1)%1.Ingresar nuevos Pedido.
       precio=0.25;
       i=0;
     elseif inv==0
-      fprintf("No seleccciono ningun Producto")
-      i=1;
+      fprintf("   No seleccciono ningun Producto \n")
+      i=0;
     endif
   endwhile
 
-  fprintf("El producto seleccionado fue %s: \n", producto);
-  cantidad=  input("Ingrese la Cantidad del Producto: ");
-  fprintf(' \n');
-  fprintf('Se agrego al carrito %d unidades del Producto: %s \n', cantidad, producto)
-  fprintf('Con un precio Unitario de Q%d y un Precio Total de Q%d \n \n', precio, cantidad*precio)
+  if(inv==0)
 
-  query=sprintf("insert into E1_Programa4 (Cliente, Cantidad, Producto, Precio, Precio_Total) values ('%s','%d', '%s', '%d','%d')",...
-    cliente, cantidad,producto,precio,cantidad*precio);
-  pq_exec_params(conn, query);
+  else
+
+  fprintf("Selecciono el Producto: %s \n", upper(producto));
+
+  n=1;
+  while n
+    cliente=input("Ingrese Nombre del Cliente: ", 's');
+    if any(isstrprop(cliente, 'digit')) % Verifica si la entrada contiene números
+      fprintf("\n     Los Nombres no deben de contener numeros. Intenta de nuevo.\n \n");
+      n=1;
+    else
+      n=0;
+    endif
+    if isempty(cliente)
+      fprintf("\n     El cliente no puede estar vacío. Intenta de nuevo.\n \n");
+      n=1;
+    endif
+  endwhile
+
+  c=1;
+  while c
+    canti=  input("Ingrese la Cantidad del Producto: ", 's');
+    numero = str2double(canti);
+    if ~isnan(numero)
+      cantidad=numero;
+      c=0;
+    else
+      fprintf("\n     La Cantidad solo deben de ser numeros. Intenta de nuevo.\n \n");
+      c=1;
+    endif
+  endwhile
+
+  fprintf(' \n');
+
+  query = sprintf("SELECT COUNT(*) FROM e1_programa4 WHERE Cliente='%s' AND Producto='%s'",...
+    upper(cliente), upper(producto));
+  rep = pq_exec_params(conn, query);
+  if rep.data{1} == 0
+    fprintf('Se agrego al carrito %d unidades del Producto: %s \n', cantidad, producto)
+    fprintf('Con un precio Unitario de Q%d y un Precio Total de Q%d \n \n', precio, cantidad*precio)
+
+    query=sprintf("insert into E1_Programa4 (Cliente, Cantidad, Producto, Precio, Precio_Total) values ('%s','%d', '%s', '%d','%d')",...
+      upper(cliente), upper(cantidad), upper(producto), upper(precio), upper(cantidad*precio));
+    pq_exec_params(conn, query);
+    fprintf(' \n')
+  else
+      disp('El usuario ya existe en la base de datos.');
+  endif
+
+  endif
+
+
+
+
+
+
 
 
 
 elseif (opciones==2)%2.Actualizar la información de un Pedido.
 
+  Historial_Postgresql = pq_exec_params(conn, 'select * from E1_Programa4;');
+  datos = Historial_Postgresql.data;
+  tama=size(datos, 1);
+
+  fprintf('%-15s %-10s %-15s %-10s %-15s\n', 'Cliente', 'Cantidad', 'Producto', 'Precio', 'Precio Total');
+  for i = 1:size(datos, 1)
+    Cliente = datos{i, 1};
+    Cantidad = datos{i, 2};
+    Producto = datos{i, 3};
+    Precio = datos{i, 4};
+    Precio_Total = datos{i, 5};
+    fprintf('%-15s %-10d %-15s %-10d %-15d\n', Cliente, Cantidad, Producto, Precio, Precio_Total);
+  end
+  fprintf(' \n');
+
+
     e=1;
-  while i
-    inv=Seleccione El Producto a cambiar("Productos", "1) Arroz--Q4", "2) Frijol--Q3", "3) Huevo(s)--Q1",...
+    i=1;
+
+  while e
+    inv=menu("Producto a cambiar", "1) Arroz--Q4", "2) Frijol--Q3", "3) Huevo(s)--Q1",...
       "4) Tortilla(s)--Q0.25");
     if inv==1
       editar="Arroz";
-      precio=4;
       e=0;
     elseif inv==2
-      producto="Frijol";
-      editar=3;
+      editar="Frijol";
       e=0;
     elseif inv==3
-      producto="Huevo(s)";
-      editar=1;
+      editar="Huevo(s)";
       e=0;
     elseif inv==4
-      producto="Tortilla(s)";
-      editar=0.25;
+      editar="Tortilla(s)";
       e=0;
     elseif inv==0
-      fprintf("No seleccciono ningun Producto")
-      e=1;
+      e=0;
+      i=0;
     endif
   endwhile
 
-  i=1;
+  if(inv~=0)
+    fprintf("El Producto a cambiar es: %s \n", upper(editar));
+  endif
+
   while i
-    inv=Seleccione El Nuevo Producto("Productos", "1) Arroz--Q4", "2) Frijol--Q3", "3) Huevo(s)--Q1",...
-      "4) Tortilla(s)--Q0.25");
+    inv=menu("Seleccione su Nuevo Producto", "1) Arroz--------Q4", "2) Frijol--------Q3",...
+      "3) Huevo(s)----Q1", "4) Tortilla(s)----Q0.25");
     if inv==1
       producto="Arroz";
       precio=4;
@@ -118,71 +183,274 @@ elseif (opciones==2)%2.Actualizar la información de un Pedido.
       precio=0.25;
       i=0;
     elseif inv==0
-      fprintf("No seleccciono ningun Producto")
-      i=1;
+      i=0;
     endif
   endwhile
 
-  fprintf("El Nuevo producto seleccionado fue %s: \n", producto);
-  cantidad=  input("Ingrese la Cantidad del Producto: ");
+  if(inv~=0)
+    fprintf("El Nuevo Producto es: %s \n \n", upper(producto));
+  endif
+
+  if(inv==0)
+    fprintf("   No seleccciono ningun Producto \n")
+
+  else
+
+  n=1;
+  while n
+    cliente=input("Ingrese Nombre del Cliente: ", 's');
+    if any(isstrprop(cliente, 'digit')) % Verifica si la entrada contiene números
+      fprintf("\n     Los Nombres no deben de contener numeros. Intenta de nuevo.\n \n");
+      n=1;
+    else
+      n=0;
+    endif
+    if isempty(cliente)
+      fprintf("\n     El cliente no puede estar vacío. Intenta de nuevo.\n \n");
+      n=1;
+    endif
+  endwhile
+
+  c=1;
+  while c
+    canti=  input("Ingrese la Cantidad del Producto: ", 's');
+    numero = str2double(canti);
+    if ~isnan(numero)
+      cantidad=numero;
+      c=0;
+    else
+      fprintf("\n     La Cantidad solo deben de ser numeros. Intenta de nuevo.\n \n");
+      c=1;
+    endif
+  endwhile
+
   fprintf(' \n');
   fprintf('Se agrego al carrito %d unidades del Producto: %s \n', cantidad, producto)
   fprintf('Con un precio Unitario de Q%d y un Precio Total de Q%d \n \n', precio, cantidad*precio)
 
-  query = sprintf("update E1_Programa4 set Cantidad='%d', Producto='%s', Precio='%d',  Precio_Total='%d' where Producto = ('%s');", ...
-    cantidad,producto,precio,cantidad*precio, editar);
+  query = sprintf("update E1_Programa4 set Cliente='%s', Cantidad='%d', Producto='%s', Precio='%d',  Precio_Total='%d' where Cliente=('%s') AND Producto = ('%s');", ...
+    upper(cliente), upper(cantidad), upper(producto), upper(precio), upper(cantidad*precio), upper(cliente), upper(editar));
   pq_exec_params(conn, query);
+
+  Historial_Postgresql = pq_exec_params(conn, 'select * from E1_Programa4;');
+  datos = Historial_Postgresql.data;
+  tama=size(datos, 1);
+
+  fprintf('%-15s %-10s %-15s %-10s %-15s\n', 'Cliente', 'Cantidad', 'Producto', 'Precio', 'Precio Total');
+  for i = 1:size(datos, 1)
+    Cliente = datos{i, 1};
+    Cantidad = datos{i, 2};
+    Producto = datos{i, 3};
+    Precio = datos{i, 4};
+    Precio_Total = datos{i, 5};
+    fprintf('%-15s %-10d %-15s %-10d %-15d\n', Cliente, Cantidad, Producto, Precio, Precio_Total);
+  end
+  fprintf(' \n');
+
+
+  endif
+
+
+
+
+
 
 
 
 elseif (opciones==3)%3.Revisar un Pedido.
-  revisar=input("Nombre del Producto a Revisar: ", 's');
+
+  Historial_Postgresql = pq_exec_params(conn, 'select * from E1_Programa4;');
+  datos = Historial_Postgresql.data;
+  tama=size(datos, 1);
+
+  fprintf('%-15s %-10s %-15s %-10s %-15s\n', 'Cliente', 'Cantidad', 'Producto', 'Precio', 'Precio Total');
+  for i = 1:size(datos, 1)
+    Cliente = datos{i, 1};
+    Cantidad = datos{i, 2};
+    Producto = datos{i, 3};
+    Precio = datos{i, 4};
+    Precio_Total = datos{i, 5};
+    fprintf('%-15s %-10d %-15s %-10d %-15d\n', Cliente, Cantidad, Producto, Precio, Precio_Total);
+  end
   fprintf(' \n');
-  query = sprintf("select * from E1_Programa3 where Producto =('%s')", ...
-    revisar);
-  Historial_Producto=pq_exec_params(conn, query);
 
-  dato1= Historial_Producto.data{1};
-  dato2= Historial_Producto.data{2};
-  dato3= Historial_Producto.data{3};
-  dato4= Historial_Producto.data{4};
 
-  disp(['Cantidad del Producto: ', num2str(dato1)])
-  disp(['Nombre del Producto: ', dato2])
-  fprintf('Precio Unitario del Producto: Q%d. \n', dato3)
-  fprintf('Precio Total del Producto: Q%d. \n', dato4)
+  if(tama>0)
+
+    cliente=input("Nombre Cliente: ", 's');
+
+    fprintf(' \n');
+
+    query = sprintf("select * from E1_Programa4 where Cliente=('%s')", ...
+      upper(cliente));
+    Historial_Estudiante=pq_exec_params(conn, query);
+
+    datos = Historial_Estudiante.data;
+    tama=size(datos, 1);
+
+    fprintf('%-15s %-10s %-15s %-10s %-15s\n', 'Cliente', 'Cantidad', 'Producto', 'Precio', 'Precio Total');
+    for i = 1:size(datos, 1)
+      Cliente = datos{i, 1};
+      Cantidad = datos{i, 2};
+      Producto = datos{i, 3};
+      Precio = datos{i, 4};
+      Precio_Total = datos{i, 5};
+      fprintf('%-15s %-10d %-15s %-10d %-15d\n', Cliente, Cantidad, Producto, Precio, Precio_Total);
+    end
+  fprintf(' \n');
+
+  else
+    fprintf("\n     La Tabla esta vacia.\n \n")
+  endif
+  fprintf(' \n');
+
+
+
+
+
+
+
 
 
 elseif (opciones==4)%4.Resumen de los Pedidos acumulados.
-  Historial_Postgresql=pq_exec_params(conn, 'select * from E1_Programa3;')
 
-  query = 'select sum(Cantidad) from E1_Programa3';
+  Historial_Postgresql = pq_exec_params(conn, 'select * from E1_Programa4;');
+  datos = Historial_Postgresql.data;
+  tama=size(datos, 1);
+
+  fprintf('%-15s %-10s %-15s %-10s %-15s\n', 'Cliente', 'Cantidad', 'Producto', 'Precio', 'Precio Total');
+  for i = 1:size(datos, 1)
+    Cliente = datos{i, 1};
+    Cantidad = datos{i, 2};
+    Producto = datos{i, 3};
+    Precio = datos{i, 4};
+    Precio_Total = datos{i, 5};
+    fprintf('%-15s %-10d %-15s %-10d %-15d\n', Cliente, Cantidad, Producto, Precio, Precio_Total);
+  end
+  fprintf(' \n');
+
+  if(tama==0)
+    fprintf("\n     La Tabla esta vacia.\n \n")
+  endif
+
+  fprintf(' \n');
+
+  query = 'select sum(Cantidad) from E1_Programa4';
   resultado = pq_exec_params(conn, query);
   valor_data = resultado.data{1};
-  fprintf('El total de los Productos es: %d \n', valor_data)
+  fprintf('El total de los Productos Pendientes es: %d \n', valor_data)
 
-  query = 'select sum(Precio_Total) from E1_Programa3';
+  query = 'select sum(Precio_Total) from E1_Programa4';
   total = pq_exec_params(conn, query);
   valor_t = total.data{1};
-  fprintf('El total del Inventario es: Q%d \n', valor_t)
+  fprintf('El total de la ganacia bruta es: Q%d \n', valor_t)
+
+
+
+
+
+
+
 
 
 elseif (opciones==5)%5.Eliminar un Producto de la base de datos.
-  producto=input("Nombre del Producto a Eliminar: ", 's');
+
+  Historial_Postgresql = pq_exec_params(conn, 'select * from E1_Programa4;');
+  datos = Historial_Postgresql.data;
+  tama=size(datos, 1);
+
+  fprintf('%-15s %-10s %-15s %-10s %-15s\n', 'Cliente', 'Cantidad', 'Producto', 'Precio', 'Precio Total');
+  for i = 1:size(datos, 1)
+    Cliente = datos{i, 1};
+    Cantidad = datos{i, 2};
+    Producto = datos{i, 3};
+    Precio = datos{i, 4};
+    Precio_Total = datos{i, 5};
+    fprintf('%-15s %-10d %-15s %-10d %-15d\n', Cliente, Cantidad, Producto, Precio, Precio_Total);
+  end
+  fprintf(' \n');
+
+  if(tama==0)
+    fprintf("\n     La Tabla esta vacia.\n \n")
+
+  else
+  fprintf(' \n');
+
+  i=1;
+  while i
+    inv=menu("Producto a Eliminar", "1) Arroz--------Q4", "2) Frijol--------Q3",...
+      "3) Huevo(s)----Q1", "4) Tortilla(s)----Q0.25");
+    if inv==1
+      producto="Arroz";
+      precio=4;
+      i=0;
+    elseif inv==2
+      producto="Frijol";
+      precio=3;
+      i=0;
+    elseif inv==3
+      producto="Huevo(s)";
+      precio=1;
+      i=0;
+    elseif inv==4
+      producto="Tortilla(s)";
+      precio=0.25;
+      i=0;
+    elseif inv==0
+      fprintf("   No seleccciono ningun Producto \n")
+      i=0;
+    endif
+  endwhile
+
+  cliente=input("Nombre Cliente: ", 's');
   seguro=yes_or_no("¿Seguro que quiere eliminar el Producto?");
   if(seguro==1)
-    query = sprintf("delete from E1_Programa3 where Producto =('%s')", producto);
+    query = sprintf("delete from E1_Programa4 where Cliente=('%s') AND Producto =('%s')",...
+    upper(cliente), upper(producto));
     pq_exec_params(conn, query);
     fprintf('El Producto fue Eliminado. \n');
   endif
+
+  fprintf(" \n");
+
+  Historial_Postgresql = pq_exec_params(conn, 'select * from E1_Programa4;');
+  datos = Historial_Postgresql.data;
+  tama=size(datos, 1);
+
+  fprintf('%-15s %-10s %-15s %-10s %-15s\n', 'Cliente', 'Cantidad', 'Producto', 'Precio', 'Precio Total');
+  for i = 1:size(datos, 1)
+    Cliente = datos{i, 1};
+    Cantidad = datos{i, 2};
+    Producto = datos{i, 3};
+    Precio = datos{i, 4};
+    Precio_Total = datos{i, 5};
+    fprintf('%-15s %-10d %-15s %-10d %-15d\n', Cliente, Cantidad, Producto, Precio, Precio_Total);
+  end
+  fprintf(' \n');
+
+  endif
+
+
+
+
+
+
+
 
 
 elseif (opciones==6)%6.Eliminar todos los Productos de la base de datos.
   seguro=yes_or_no("¿Seguro que quiere eliminar todos los Productos?");
   if(seguro==1)
-    Borrar_Tabla=pq_exec_params(conn, "delete from E1_Programa3;");
+    Borrar_Tabla=pq_exec_params(conn, "delete from E1_Programa4;");
     fprintf('Todos los Productos fueron eliminados. \n');
   endif
+
+
+
+
+
+
+
 
 
 elseif (opciones==7)% 7.Salir.
